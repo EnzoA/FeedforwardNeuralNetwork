@@ -140,12 +140,9 @@ class FeedforwardNeuralNetwork:
         loss = 1/n * np.sum(self._loss(y, a[-1]), axis=1)[0]
 
         # Backward pass.
-        # TODO: Make the gradients matrices. Then when updating, take the mean of the gradients.
-        local_gradient = np.sum(
-            self._loss_derivative(y, a[-1]) * self._f_derivative(z[-1]),
-            axis=1).reshape((y.shape[0], 1))
+        local_gradient = self._loss_derivative(y, a[-1]) * self._f_derivative(z[-1])
         for l, W in enumerate(self._W[::-1]):
-            self._W[-l - 1] = self._W[-l - 1] - lr * (local_gradient @ (np.sum(a[-l - 2], axis=1).reshape((a[-l - 2].shape[0], 1)).T))
-            self._b[-l - 1] = self._b[-l - 1] - lr * local_gradient
-            local_gradient = (W.T @ local_gradient) * np.sum(self._f_derivative(z[-l - 2]), axis=1).reshape((z[-l - 2].shape[0], 1))
+            self._W[-l - 1] = self._W[-l - 1] - lr * np.mean(local_gradient @ a[-l - 2].T, axis=1).reshape((local_gradient.shape[0], 1))
+            self._b[-l - 1] = self._b[-l - 1] - lr * np.mean(local_gradient, axis=1).reshape((local_gradient.shape[0], 1))
+            local_gradient = (W.T @ local_gradient) * self._f_derivative(z[-l - 2])
         return loss
